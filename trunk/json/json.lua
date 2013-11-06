@@ -511,6 +511,9 @@ do
 				end
 				
 				local v = read_object_value(o)
+                if (not v) then
+                    v = _M.null
+                end
 				o[k] = v
 			end
 		end
