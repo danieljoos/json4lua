@@ -57,13 +57,16 @@ local decode_scanWhitespace
 local encodeString
 local isArray
 local isEncodable
-local null
-
-null = function() end
 
 -----------------------------------------------------------------------------
 -- PUBLIC FUNCTIONS
 -----------------------------------------------------------------------------
+--- The null function allows one to specify a null value in an associative array (which is otherwise
+-- discarded if you set the value with 'nil' in Lua. Simply set t = { first=json.null }
+function _M.null()
+  return _M.null -- so json.null() will also return null ;-)
+end
+
 --- Encodes an arbitrary Lua object / variable.
 -- @param v The Lua object / variable to be JSON encoded.
 -- @return String containing the JSON encoding in internal Lua string format (i.e. not unicode)
@@ -109,7 +112,7 @@ function _M.encode (v)
   end
   
   -- Handle null values
-  if vtype=='function' and v==null then
+  if vtype=='function' and v==_M.null then
     return 'null'
   end
   
@@ -123,13 +126,7 @@ end
 function _M.decode(s)
 	-- Function is re-defined below after token and other items are created.
 	-- Just defined here for code neatness.
-	return null
-end
-
---- The null function allows one to specify a null value in an associative array (which is otherwise
--- discarded if you set the value with 'nil' in Lua. Simply set t = { first=json.null }
-function _M.null()
-  return null -- so json.null() will also return null ;-)
+	return _M.null
 end
 
 -----------------------------------------------------------------------------
@@ -179,7 +176,7 @@ end
 -- @return boolean True if the object should be JSON encoded, false if it should be ignored.
 function isEncodable(o)
   local t = base.type(o)
-  return (t=='string' or t=='boolean' or t=='number' or t=='nil' or t=='table') or (t=='function' and o==null) 
+  return (t=='string' or t=='boolean' or t=='number' or t=='nil' or t=='table') or (t=='function' and o==_M.null) 
 end
 
 -- Radical performance improvement for decode from Eike Decker!
