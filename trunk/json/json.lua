@@ -41,7 +41,8 @@ local base = _G
 -----------------------------------------------------------------------------
 -- Module declaration
 -----------------------------------------------------------------------------
-module("json")
+json = {}
+local _M = json
 
 -- Public functions
 
@@ -56,6 +57,9 @@ local decode_scanWhitespace
 local encodeString
 local isArray
 local isEncodable
+local null
+
+null = function() end
 
 -----------------------------------------------------------------------------
 -- PUBLIC FUNCTIONS
@@ -63,7 +67,7 @@ local isEncodable
 --- Encodes an arbitrary Lua object / variable.
 -- @param v The Lua object / variable to be JSON encoded.
 -- @return String containing the JSON encoding in internal Lua string format (i.e. not unicode)
-function encode (v)
+function _M.encode (v)
   -- Handle nil values
   if v==nil then
     return "null"
@@ -88,12 +92,12 @@ function encode (v)
     local bArray, maxCount = isArray(v)
     if bArray then
       for i = 1,maxCount do
-        table.insert(rval, encode(v[i]))
+        table.insert(rval, _M.encode(v[i]))
       end
     else	-- An object, not an array
       for i,j in base.pairs(v) do
         if isEncodable(i) and isEncodable(j) then
-          table.insert(rval, '"' .. encodeString(i) .. '":' .. encode(j))
+          table.insert(rval, '"' .. encodeString(i) .. '":' .. _M.encode(j))
         end
       end
     end
@@ -116,7 +120,7 @@ end
 --- Decodes a JSON string and returns the decoded value as a Lua data structure / value.
 -- @param s The string to scan.
 -- @return Lua objectthat was scanned, as a Lua table / string / number / boolean or nil.
-function decode(s)
+function _M.decode(s)
 	-- Function is re-defined below after token and other items are created.
 	-- Just defined here for code neatness.
 	return null
@@ -124,7 +128,7 @@ end
 
 --- The null function allows one to specify a null value in an associative array (which is otherwise
 -- discarded if you set the value with 'nil' in Lua. Simply set t = { first=json.null }
-function null()
+function _M.null()
   return null -- so json.null() will also return null ;-)
 end
 
@@ -333,7 +337,7 @@ do
 		:link(tt_ignore)             :to (allchars)
 		:link(true)                  :to "*"
 		
-	function decode (js_string)
+	function _M.decode (js_string)
 		local pos = 1 -- position in the string
 		
 		-- read the next byte value
@@ -387,7 +391,7 @@ do
 					--start = pos
 				end -- jump over escaped chars, no matter what
 			until t == true
-			return (base.loadstring("return " .. js_string:sub(start-1, pos-1) ) ())
+			return (base.load("return " .. js_string:sub(start-1, pos-1) ) ())
 
 			-- We consider the situation where no escaped chars were encountered separately,
 			-- and use the fastest possible return in this case.
@@ -524,3 +528,5 @@ do
 		return r
 	end
 end
+
+return _M
